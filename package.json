@@ -1,0 +1,39 @@
+{
+  "name": "fastify-jaeger",
+  "version": "1.0.0",
+  "description": "Fastify plugin for Jaeger distributed tracing system",
+  "main": "index.js",
+  "scripts": {
+    "jaeger": "docker container run -d -p 6831:6831/udp -p 6832:6832/udp -p 16686:16686 jaegertracing/all-in-one:1.17",
+    "test": "standard | snazzy && tap **/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maumercado/fastify-jaeger.git"
+  },
+  "keywords": [
+    "tracing",
+    "jaeger",
+    "trace",
+    "fastify",
+    "distributed",
+    "timing"
+  ],
+  "author": "Mauricio Mercado - @maumercado (https://codigo.sh)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maumercado/fastify-jaeger/issues"
+  },
+  "homepage": "https://github.com/maumercado/fastify-jaeger#readme",
+  "devDependencies": {
+    "fastify": "^2.13.0",
+    "sinon": "^9.0.2",
+    "snazzy": "^8.0.0",
+    "standard": "^14.3.3",
+    "tap": "^14.10.7"
+  },
+  "dependencies": {
+    "fastify-plugin": "^1.6.1",
+    "jaeger-client": "^3.17.2"
+  }
+}
