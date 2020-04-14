@@ -32,19 +32,17 @@ function jaegerPlugin (fastify, opts = { exposeAPI: true }, next) {
 
   const tracerMap = new WeakMap()
 
-  function getTraceAndTracer () {
+  function api () {
     return {
       get span () {
         return tracerMap.get(this)
       },
-      get Tags () {
-        return Tags
-      }
+      Tags
     }
   }
 
   if (opts.exposeAPI) {
-    fastify.decorateRequest('jaeger', getTraceAndTracer)
+    fastify.decorateRequest('jaeger', api)
   }
 
   function filterObject (obj) {
