@@ -8,6 +8,7 @@ const url = require('url')
 function jaegerPlugin (fastify, opts, next) {
   assert(opts.serviceName, 'Jaeger Plugin requires serviceName option')
 
+  const { state, _id } = opts
   const tracerConfig = {
     serviceName: opts.serviceName,
     sampler: {
@@ -23,30 +24,56 @@ function jaegerPlugin (fastify, opts, next) {
     logger: fastify.log
   }
 
-  const tracer = initTracer({ ...tracerConfig, ...opts }, { ...tracerOptions, ...opts })
+  const tracerDefaults = { state, ...opts }
 
-  fastify.decorateRequest('span', '')
+  const tracer = initTracer({ ...tracerConfig, ...tracerDefaults }, { ...tracerOptions, ...tracerDefaults })
+
+  const tracerMap = new WeakMap()
+
+  function getTraceAndTracer () {
+    return {
+      get span () {
+        return opts.exposeAPI ? tracerMap.get(this) : () => {}
+      }
+    }
+  }
+
+  fastify.decorateRequest('jaeger', getTraceAndTracer)
+
+  function filterObject (obj) {
+    const ret = {}
+    Object.keys(obj)
+      .filter((key) => obj[key] != null)
+      .forEach((key) => { ret[key] = obj[key] })
+
+    return ret
+  }
+
+  function setContext (headers) {
+    return filterObject({ ...headers, ...state })
+  }
 
   function onRequest (req, res, done) {
-    const parentSpanContext = tracer.extract('http_headers', req.raw.headers)
+    const parentSpanContext = tracer.extract('http_headers', setContext(req.raw.headers))
     const span = tracer.startSpan(`${req.raw.method} - ${url.format(req.raw.url)}`, {
       childOf: parentSpanContext,
       tags: { 'span.kind': 'producer', 'http.method': req.raw.method, 'http.url': url.format(req.raw.url) }
     })
 
-    req.span = span
+    tracerMap.set(req, span)
     done()
   }
 
   function onResponse (req, reply, done) {
-    req.span.log({ statusCode: reply.res.statusCode })
-    req.span.finish()
+    const span = tracerMap.get(this)
+    span.log({ statusCode: reply.res.statusCode })
     done()
   }
 
   function onError (req, reply, error, done) {
-    req.span.setTag('error', error)
-    req.span.setTag('http.method', req.raw.method)
+    const span = tracerMap.get(this)
+    span.setTag('error', error)
+    span.setTag('http.method', req.raw.method)
     done()
   }
 
