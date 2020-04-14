@@ -72,7 +72,11 @@ function jaegerPlugin (fastify, opts, next) {
 
   function onError (req, reply, error, done) {
     const span = tracerMap.get(this)
-    span.setTag('error', error)
+    span.setTag('error', {
+      'error.object': error,
+      message: error.message,
+      stack: error.stack
+    })
     span.setTag('http.method', req.raw.method)
     done()
   }
