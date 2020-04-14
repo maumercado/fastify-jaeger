@@ -8,7 +8,7 @@ const url = require('url')
 function jaegerPlugin (fastify, opts, next) {
   assert(opts.serviceName, 'Jaeger Plugin requires serviceName option')
 
-  const { state, _id } = opts
+  const { state } = opts
   const tracerConfig = {
     serviceName: opts.serviceName,
     sampler: {
