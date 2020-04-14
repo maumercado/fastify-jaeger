@@ -27,7 +27,6 @@
   "homepage": "https://github.com/maumercado/fastify-jaeger#readme",
   "devDependencies": {
     "fastify": "^2.13.0",
-    "sinon": "^9.0.2",
     "snazzy": "^8.0.0",
     "standard": "^14.3.3",
     "tap": "^14.10.7"
