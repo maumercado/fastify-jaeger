@@ -7,9 +7,9 @@ const url = require('url')
 
 const { Tags, FORMAT_HTTP_HEADERS } = opentracing
 
-function jaegerPlugin (fastify, opts = { exposeAPI: true }, next) {
+function jaegerPlugin (fastify, opts, next) {
   assert(opts.serviceName, 'Jaeger Plugin requires serviceName option')
-
+  const exposeAPI = opts.exposeAPI !== false
   const { state } = opts
   const tracerConfig = {
     serviceName: opts.serviceName,
@@ -33,15 +33,16 @@ function jaegerPlugin (fastify, opts = { exposeAPI: true }, next) {
   const tracerMap = new WeakMap()
 
   function api () {
+    const req = this
     return {
       get span () {
-        return tracerMap.get(this)
+        return tracerMap.get(req)
       },
       Tags
     }
   }
 
-  if (opts.exposeAPI) {
+  if (exposeAPI) {
     fastify.decorateRequest('jaeger', api)
   }
 
