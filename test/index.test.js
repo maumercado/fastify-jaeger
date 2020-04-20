@@ -1,30 +1,24 @@
 'use strict'
 
-const Fastify = require('fastify')
+const createFastify = require('fastify')
 const { test } = require('tap')
 const spy = require('./helper')
 
-test('Should error when initializing the plugin without serviceName argument', async ({ rejects }) => {
-  const fastify = Fastify()
+test('Should error when initializing the plugin without serviceName argument', async ({ throws }) => {
+  const fastify = createFastify()
   const jaegerPlugin = require('../')
 
-  rejects(
-    async () => fastify.register(jaegerPlugin, { }).after(),
+  throws(
+    () => {
+      fastify.register(jaegerPlugin, { }).after()
+    },
     {},
     'serviceName option should not be empty'
   )
 })
 
-test('Should initialize plugin', async ({ resolves }) => {
-  const fastify = Fastify()
-  const jaegerPlugin = require('../')
-  resolves(
-    async () => fastify.register(jaegerPlugin, { serviceName: 'test' })
-  )
-})
-
 test('Should not expose jaeger api when explicitly set to false', async ({ teardown, is }) => {
-  const fastify = Fastify()
+  const fastify = createFastify()
 
   teardown(async () => {
     await fastify.close()
@@ -44,7 +38,7 @@ test('Should initialize plugin with default configuration', async ({ teardown, i
   const initTracerSpy = spy(require.cache[require.resolve('jaeger-client')].exports.initTracer)
   require.cache[require.resolve('jaeger-client')].exports.initTracer = initTracerSpy
 
-  const fastify = Fastify()
+  const fastify = createFastify()
 
   teardown(async () => {
     delete require.cache[require.resolve('jaeger-client')]
@@ -80,7 +74,7 @@ test('Should initialize plugin with default configuration', async ({ teardown, i
 })
 
 test('Should set proper tag values', async ({ teardown, same }) => {
-  const fastify = Fastify()
+  const fastify = createFastify()
   const route = '/test'
   const method = 'GET'
   teardown(async () => {
@@ -105,8 +99,8 @@ test('Should set proper tag values', async ({ teardown, same }) => {
   })
 })
 
-test('Should set proper tag values on error', async ({ teardown, is, same }) => {
-  const fastify = Fastify()
+test('Should set proper tag values on error', async ({ teardown, is, same, plan }) => {
+  const fastify = createFastify()
   const route = '/error'
   const method = 'GET'
   const testErr = new Error('test error')
@@ -117,6 +111,7 @@ test('Should set proper tag values on error', async ({ teardown, is, same }) => 
 
   fastify[method.toLowerCase()](route, async (req, reply) => {
     finalRequest = req
+
     throw testErr
   })
 
@@ -134,8 +129,8 @@ test('Should set proper tag values on error', async ({ teardown, is, same }) => 
   same(tagError.value, { 'error.object': testErr, message: testErr.message, stack: testErr.stack })
 })
 
-test('Should set proper tag values on response', async ({ teardown, is, same }) => {
-  const fastify = Fastify()
+test('Should set proper tag values on response', async ({ teardown, is }) => {
+  const fastify = createFastify()
   const route = '/restest'
   const method = 'GET'
   let finalRequest
@@ -157,7 +152,6 @@ test('Should set proper tag values on response', async ({ teardown, is, same }) 
     method,
     url: route
   })
-
   const tagRes = finalRequest.jaeger().span._tags.find(tag => tag.key === 'http.status_code')
   is(tagRes.key, 'http.status_code')
   is(tagRes.value, 200)

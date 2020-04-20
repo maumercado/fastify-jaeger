@@ -38,7 +38,7 @@ function jaegerPlugin (fastify, opts, next) {
       get span () {
         return tracerMap.get(req)
       },
-      Tags
+      tags: Tags
     }
   }
 
