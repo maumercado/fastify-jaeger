@@ -1,7 +1,7 @@
 # fastify-jaeger
 
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
-![Lint, Test](https://github.com/maumercado/fastify-jaeger/workflows/Lint,%20Test/badge.svg?branch=master)
+[![Lint, Test](https://github.com/maumercado/fastify-jaeger/workflows/Lint,%20Test/badge.svg?branch=master)](https://github.com/maumercado/fastify-jaeger/actions?query=workflow%3A%22Lint%2C+Test%22)
 
 Fastify plugin for Jaeger distributed tracing system.
 
