@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "jaeger": "docker container run -d -p 6831:6831/udp -p 6832:6832/udp -p 16686:16686 jaegertracing/all-in-one:1.17",
-    "test": "standard | snazzy && tap **/*.test.js"
+    "test": "tap **/*.test.js",
+    "lint": "standard | snazzy",
+    "fix": "standard --fix"
   },
   "repository": {
     "type": "git",

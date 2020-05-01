@@ -22,5 +22,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Lint and Test
+      - name: Lint Check
+        run: npm run lint
+
+      - name: Test
         run: npm run test
