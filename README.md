@@ -7,7 +7,9 @@ Fastify plugin for Jaeger distributed tracing system.
 
 ## Install
 
-TODO
+```sh
+npm install fastify-jaeger
+```
 
 ## Usage
 Require the plugin and register it within Fastify, the pass the following options: `{ serviceName [, exposeAPI] }`
