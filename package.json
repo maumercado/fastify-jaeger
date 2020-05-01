@@ -9,6 +9,11 @@
     "lint": "standard | snazzy",
     "fix": "standard --fix"
   },
+  "files": [
+    "test",
+    "example.js",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/maumercado/fastify-jaeger.git"
