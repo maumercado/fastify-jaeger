@@ -31,90 +31,86 @@ test('Should not expose jaeger api when explicitly set to false', async ({ teard
   is(fastify.hasRequestDecorator('jaeger'), false)
 })
 
-test('Should initialize plugin with correct configuration', async (child) => {
-  const serviceName = 'test'
-
-  const setupChildTest = (pluginOpts) => {
-    const clear = () => {
-      delete require.cache[require.resolve('jaeger-client')]
-      delete require.cache[require.resolve(require('path').join(__dirname, '../index'))]
-    }
-
-    clear()
-    require('jaeger-client')
-    const initTracerSpy = spy(require.cache[require.resolve('jaeger-client')].exports.initTracer)
-    require.cache[require.resolve('jaeger-client')].exports.initTracer = initTracerSpy
-
-    const fastify = createFastify()
-    fastify.get('/', (req, reply) => {
-      reply.code(200).send({ hello: 'world' })
-    })
-
-    fastify.register(require('../index'), pluginOpts)
-
-    return {
-      fastify,
-      initTracerSpy,
-      teardown: async () => {
-        clear()
-        await fastify.close()
-      }
-    }
+const setupTracerTest = (pluginOpts) => {
+  const clear = () => {
+    delete require.cache[require.resolve('jaeger-client')]
+    delete require.cache[require.resolve(require('path').join(__dirname, '../index'))]
   }
 
-  child.test('should use default config when no configuration is provided', async (ct) => {
-    const { fastify, initTracerSpy, teardown } = setupChildTest({ serviceName })
+  clear()
+  require('jaeger-client')
+  const initTracerSpy = spy(require.cache[require.resolve('jaeger-client')].exports.initTracer)
+  require.cache[require.resolve('jaeger-client')].exports.initTracer = initTracerSpy
 
-    ct.teardown(teardown)
-
-    await fastify.ready()
-    const response = await fastify.inject({ method: 'GET', url: '/' })
-
-    ct.is(initTracerSpy.spy.calls.length, 1)
-    ct.has(initTracerSpy.spy.calls[0][0], {
-      serviceName: 'test',
-      sampler: { type: 'const', param: 1 },
-      reporter: { logSpans: false },
-    })
-    ct.has(initTracerSpy.spy.calls[0][1], { logger: fastify.log })
-    ct.is(fastify.hasRequestDecorator('jaeger'), true)
-    ct.is(response.statusCode, 200)
+  const fastify = createFastify()
+  fastify.get('/', (req, reply) => {
+    reply.code(200).send({ hello: 'world' })
   })
 
-  child.test('should merge default config with the user provided config', async (ct) => {
-    const { fastify, initTracerSpy, teardown } = setupChildTest({
-      serviceName,
-      reporter: {
-        logSpans: true
-      },
-      initTracerOpts: {
-        tags: {
-          foo: 'bar'
-        }
-      }
-    })
+  fastify.register(require('../index'), pluginOpts)
 
-    ct.teardown(teardown)
+  return {
+    fastify,
+    initTracerSpy,
+    teardownCb: async () => {
+      clear()
+      await fastify.close()
+    }
+  }
+}
 
-    await fastify.ready()
-    const response = await fastify.inject({ method: 'GET', url: '/' })
+test('should use default config when no configuration is provided', async ({ teardown, is, has }) => {
+  const { fastify, initTracerSpy, teardownCb } = setupTracerTest({ serviceName: 'test' })
 
-    ct.is(initTracerSpy.spy.calls.length, 1)
-    ct.has(initTracerSpy.spy.calls[0][0], {
-      serviceName: 'test',
-      sampler: { type: 'const', param: 1 },
-      reporter: { logSpans: true },
-    })
-    ct.has(initTracerSpy.spy.calls[0][1], {
-      logger: fastify.log,
+  teardown(teardownCb)
+
+  await fastify.ready()
+  const response = await fastify.inject({ method: 'GET', url: '/' })
+
+  is(initTracerSpy.spy.calls.length, 1)
+  has(initTracerSpy.spy.calls[0][0], {
+    serviceName: 'test',
+    sampler: { type: 'const', param: 1 },
+    reporter: { logSpans: false }
+  })
+  has(initTracerSpy.spy.calls[0][1], { logger: fastify.log })
+  is(fastify.hasRequestDecorator('jaeger'), true)
+  is(response.statusCode, 200)
+})
+
+test('should merge default config with the user provided config', async ({ teardown, is, has }) => {
+  const { fastify, initTracerSpy, teardownCb } = setupTracerTest({
+    serviceName: 'test',
+    reporter: {
+      logSpans: true
+    },
+    initTracerOpts: {
       tags: {
         foo: 'bar'
       }
-    })
-    ct.has(initTracerSpy.spy.results[0].value, { _tags: { foo: 'bar' } })
-    ct.is(fastify.hasRequestDecorator('jaeger'), true)
-    ct.is(response.statusCode, 200)
+    }
   })
+
+  teardown(teardownCb)
+
+  await fastify.ready()
+  const response = await fastify.inject({ method: 'GET', url: '/' })
+
+  is(initTracerSpy.spy.calls.length, 1)
+  has(initTracerSpy.spy.calls[0][0], {
+    serviceName: 'test',
+    sampler: { type: 'const', param: 1 },
+    reporter: { logSpans: true }
+  })
+  has(initTracerSpy.spy.calls[0][1], {
+    logger: fastify.log,
+    tags: {
+      foo: 'bar'
+    }
+  })
+  has(initTracerSpy.spy.results[0].value, { _tags: { foo: 'bar' } })
+  is(fastify.hasRequestDecorator('jaeger'), true)
+  is(response.statusCode, 200)
 })
 
 test('Should set proper tag values', async ({ teardown, same }) => {
