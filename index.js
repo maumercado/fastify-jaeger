@@ -9,10 +9,9 @@ const { Tags, FORMAT_HTTP_HEADERS } = opentracing
 
 function jaegerPlugin (fastify, opts, next) {
   assert(opts.serviceName, 'Jaeger Plugin requires serviceName option')
+  const { state = {}, initTracerOpts = {}, ...tracerConfig } = opts
   const exposeAPI = opts.exposeAPI !== false
-  const { state } = opts
-  const tracerConfig = {
-    serviceName: opts.serviceName,
+  const defaultConfig = {
     sampler: {
       type: 'const',
       param: 1
@@ -22,13 +21,14 @@ function jaegerPlugin (fastify, opts, next) {
     }
   }
 
-  const tracerOptions = {
+  const defaultOptions = {
     logger: fastify.log
   }
 
-  const tracerDefaults = { state, ...opts }
-
-  const tracer = initTracer({ ...tracerConfig, ...tracerDefaults }, { ...tracerOptions, ...tracerDefaults })
+  const tracer = initTracer(
+    { ...defaultConfig, ...tracerConfig },
+    { ...defaultOptions, ...initTracerOpts }
+  )
 
   const tracerMap = new WeakMap()
 
@@ -73,6 +73,7 @@ function jaegerPlugin (fastify, opts, next) {
   function onResponse (req, reply, done) {
     const span = tracerMap.get(req)
     span.setTag(Tags.HTTP_STATUS_CODE, reply.res.statusCode)
+    span.finish()
     done()
   }
 

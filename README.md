@@ -16,7 +16,10 @@ Require the plugin and register it within Fastify, the pass the following option
 
 *exposeAPI: (true by default)* Exposes the Span API, binded to the current request, which allows the user to setTags, and log the current span.
 
-This plugins supports all other options and configurations of the official [jaeger-client-node](https://github.com/jaegertracing/jaeger-client-node) throught the options object of the plugin.
+This plugins supports all options and configurations of [jaeger-client-node's `initTracer` method](https://github.com/jaegertracing/jaeger-client-node#initialization).
+
+- The options param can be configured via `opts.initTracerOpts`
+- All other top-level `opts` will be passed in as the config param.
 
 It uses the logger set to the fastify instance as the tracer logger.
 
@@ -33,7 +36,7 @@ fastify.get('/', (req, reply) => {
 
 fastify.listen(3000, err => {
   if (err) throw err
-  console.log('Server listenting on localhost:', fastify.server.address().port)
+  console.log('Server listening on localhost:', fastify.server.address().port)
 })
 ```
 
