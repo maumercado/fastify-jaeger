@@ -9,10 +9,9 @@ const { Tags, FORMAT_HTTP_HEADERS } = opentracing
 
 function jaegerPlugin (fastify, opts, next) {
   assert(opts.serviceName, 'Jaeger Plugin requires serviceName option')
+  const { state = {}, initTracerOpts = {}, ...tracerConfig } = opts
   const exposeAPI = opts.exposeAPI !== false
-  const { state } = opts
-  const tracerConfig = {
-    serviceName: opts.serviceName,
+  const defaultConfig = {
     sampler: {
       type: 'const',
       param: 1
@@ -22,13 +21,14 @@ function jaegerPlugin (fastify, opts, next) {
     }
   }
 
-  const tracerOptions = {
+  const defaultOptions = {
     logger: fastify.log
   }
 
-  const tracerDefaults = { state, ...opts }
-
-  const tracer = initTracer({ ...tracerConfig, ...tracerDefaults }, { ...tracerOptions, ...tracerDefaults })
+  const tracer = initTracer(
+    { ...defaultConfig, ...tracerConfig },
+    { ...defaultOptions, ...initTracerOpts }
+  )
 
   const tracerMap = new WeakMap()
 
@@ -62,9 +62,9 @@ function jaegerPlugin (fastify, opts, next) {
   function onRequest (req, res, done) {
     const parentSpanContext = tracer.extract(FORMAT_HTTP_HEADERS, setContext(req.raw.headers))
     const span = tracer.startSpan(`${req.raw.method} - ${url.format(req.raw.url)}`, {
-      childOf: parentSpanContext,
-      tags: { [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER, [Tags.HTTP_METHOD]: req.raw.method, [Tags.HTTP_URL]: url.format(req.raw.url) }
-    })
+        childOf: parentSpanContext,
+        tags: { [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER, [Tags.HTTP_METHOD]: req.raw.method, [Tags.HTTP_URL]: url.format(req.raw.url) }
+      })
 
     tracerMap.set(req, span)
     done()
@@ -73,6 +73,7 @@ function jaegerPlugin (fastify, opts, next) {
   function onResponse (req, reply, done) {
     const span = tracerMap.get(req)
     span.setTag(Tags.HTTP_STATUS_CODE, reply.res.statusCode)
+    span.finish()
     done()
   }
 
