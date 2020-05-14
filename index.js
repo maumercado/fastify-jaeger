@@ -62,9 +62,9 @@ function jaegerPlugin (fastify, opts, next) {
   function onRequest (req, res, done) {
     const parentSpanContext = tracer.extract(FORMAT_HTTP_HEADERS, setContext(req.raw.headers))
     const span = tracer.startSpan(`${req.raw.method} - ${url.format(req.raw.url)}`, {
-        childOf: parentSpanContext,
-        tags: { [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER, [Tags.HTTP_METHOD]: req.raw.method, [Tags.HTTP_URL]: url.format(req.raw.url) }
-      })
+      childOf: parentSpanContext,
+      tags: { [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER, [Tags.HTTP_METHOD]: req.raw.method, [Tags.HTTP_URL]: url.format(req.raw.url) }
+    })
 
     tracerMap.set(req, span)
     done()
