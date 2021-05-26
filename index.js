@@ -2,7 +2,7 @@
 
 const assert = require('assert')
 const fp = require('fastify-plugin')
-const { initTracer, opentracing } = require('jaeger-client')
+const { initTracer, opentracing, ZipkinB3TextMapCodec } = require('jaeger-client')
 const url = require('url')
 
 const { Tags, FORMAT_HTTP_HEADERS } = opentracing
@@ -29,6 +29,11 @@ function jaegerPlugin (fastify, opts, next) {
     { ...defaultConfig, ...tracerConfig },
     { ...defaultOptions, ...initTracerOpts }
   )
+
+  let codec = new ZipkinB3TextMapCodec({ urlEncoding: true })
+
+  tracer.registerInjector(FORMAT_HTTP_HEADERS, codec)
+  tracer.registerExtractor(FORMAT_HTTP_HEADERS, codec)
 
   const tracerMap = new WeakMap()
 
@@ -63,7 +68,11 @@ function jaegerPlugin (fastify, opts, next) {
     const parentSpanContext = tracer.extract(FORMAT_HTTP_HEADERS, setContext(req.raw.headers))
     const span = tracer.startSpan(`${req.raw.method} - ${url.format(req.raw.url)}`, {
       childOf: parentSpanContext,
-      tags: { [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER, [Tags.HTTP_METHOD]: req.raw.method, [Tags.HTTP_URL]: url.format(req.raw.url) }
+      tags: {
+        [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
+        [Tags.HTTP_METHOD]: req.raw.method,
+        [Tags.HTTP_URL]: url.format(req.raw.url)
+      }
     })
 
     tracerMap.set(req, span)
