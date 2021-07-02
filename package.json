@@ -36,9 +36,8 @@
   },
   "homepage": "https://github.com/maumercado/fastify-jaeger#readme",
   "devDependencies": {
-    "@types/jaeger-client": "^3.18.1",
     "@types/node": "^15.3.0",
-    "fastify": "^3.18.1",
+    "fastify": "^2.13.0",
     "snazzy": "^8.0.0",
     "standard": "^14.3.3",
     "tap": "^14.10.7",
