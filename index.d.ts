@@ -1,16 +1,11 @@
-import {Span} from 'opentracing';
-import {FastifyPluginCallback} from 'fastify'
+import { Span } from 'opentracing'
+import { FastifyPluginCallback } from 'fastify'
+import { TracingConfig, TracingOptions } from 'jaeger-client'
 
-interface PluginOptions {
-    serviceName?: string,
-    reporter?: {
-        logSpans?: boolean
-    }
+interface PluginOptions extends TracingConfig {
     exposeAPI?: boolean,
     state?: never,
-    initTracerOpts?: never,
-
-    [key: string]: unknown;
+    initTracerOpts?: TracingOptions,
 }
 
 declare module 'fastify' {
