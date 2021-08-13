@@ -81,7 +81,7 @@ function jaegerPlugin (fastify, opts, next) {
 
   function onResponse (req, reply, done) {
     const span = tracerMap.get(req)
-    span.setTag(Tags.HTTP_STATUS_CODE, reply.res.statusCode)
+    span.setTag(Tags.HTTP_STATUS_CODE, reply.raw.res.statusCode)
     span.finish()
     done()
   }
